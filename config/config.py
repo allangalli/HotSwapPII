@@ -13,9 +13,9 @@ GITHUB_URL = "https://github.com/yourorganization/pii-detection"
 DEFAULT_DEMO_TEXT_PATH = "data/demo_text.txt"
 
 # Model configurations
-DEFAULT_MODEL = "HuggingFace/obi/deid_roberta_i2b2"
+DEFAULT_MODEL = "GLiNER/urchade/gliner_multi_pii-v1"
 DEFAULT_MODEL_INDEX = 1  # Index in the model list dropdown
-DEFAULT_THRESHOLD = 0.35
+DEFAULT_THRESHOLD = 0.40
 
 # Available models
 MODEL_OPTIONS = [
@@ -40,7 +40,8 @@ OPENAI_DEFAULT_MODEL = "gpt-3.5-turbo-instruct"
 # Entity selection
 DEFAULT_ENTITY_SELECTION = [
     "PERSON", "ORGANIZATION", "LOCATION", "EMAIL_ADDRESS", "PHONE_NUMBER", 
-    "CREDIT_CARD", "US_SSN", "DATE_TIME", "CAN_DRIVER_LICENSE"
+    "CREDIT_CARD", "US_SSN", "DATE_TIME", "CAN_DRIVER_LICENSE", "ADDRESS", 
+    "US_PASSPORT", "US_DRIVER_LICENSE", "PASSWORD",
 ]
 
 # Supported entity types with descriptions
@@ -74,12 +75,12 @@ ENTITY_DESCRIPTIONS: Dict[str, str] = {
 CORE_ENTITIES: Set[str] = {
     "PERSON", "ORGANIZATION", "LOCATION", "EMAIL_ADDRESS", "PHONE_NUMBER", 
     "CREDIT_CARD", "US_SSN", "DATE_TIME", "IP_ADDRESS", "ADDRESS",
-    "US_PASSPORT", "US_DRIVER_LICENSE", "CAN_DRIVER_LICENSE", "PASSWORD"
+    "US_PASSPORT", "US_DRIVER_LICENSE", "CAN_DRIVER_LICENSE", "PASSWORD",
 }
 
 # Default for filtering overlapping entities
 DEFAULT_EXCLUDE_OVERLAPS = True
-DEFAULT_OVERLAP_TOLERANCE = 1
+DEFAULT_OVERLAP_TOLERANCE = 5
 
 # Validation dataset mapping
 VALIDATION_TO_SYSTEM_MAPPING: Dict[str, str] = {
@@ -93,7 +94,7 @@ VALIDATION_TO_SYSTEM_MAPPING: Dict[str, str] = {
     'credit_card_number': 'CREDIT_CARD',
     'passport_number': 'US_PASSPORT',
     'driver_license_number': 'US_DRIVER_LICENSE',
-    'driver_liscense_CA': 'CAN_DRIVER_LICENSE',
+    'driver_license_CA': 'CAN_DRIVER_LICENSE',
     'password': 'PASSWORD',
     'company': 'ORGANIZATION',
     'job_title': 'JOB_TITLE',
