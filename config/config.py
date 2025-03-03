@@ -7,7 +7,7 @@ from typing import Dict, List, Set
 # Application settings
 APP_TITLE = "HotSwapPII"
 APP_DESCRIPTION = "Identify and anonymize personally identifiable information (PII) in text."
-GITHUB_URL = "https://github.com/allangalli/HotSwapPII/tree/main"
+GITHUB_URL = "https://github.com/allangalli/HotSwapPII"
 
 # Default text loaded on application start
 DEFAULT_DEMO_TEXT_PATH = "data/demo_text.txt"
