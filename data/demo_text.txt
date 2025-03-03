@@ -1,0 +1,24 @@
+CASE 1: Simple non-overlapping entities (should keep all)
+My name is John Smith and I live in New York. My email is john.smith@example.com and my phone is 555-123-4567.
+CASE 2: Exact same span (should filter one with lower confidence)
+Contact admin@company.org for assistance with your 123456789 account.
+CASE 3: Entities with same start index but different end indices
+Please reach out to support@corporation.io today for help.
+CASE 4: Entities with same end index but different start indices
+To verify identity, please submit form-ID12345 by tomorrow.
+CASE 5: Partial overlap of spans (within tolerance)
+I work at TechCorp International Inc. and our office is at 123 Main Street.
+CASE 6: One entity completely contained within another
+The conference will be held on April 15, 2023 at the Grand Hotel.
+CASE 7: Start/end positions within 1-2 characters (test tolerance)
+Call us at (800)555-1234 extension 5678 or visit www.testwebsite.com online.
+CASE 8: Same entity types with overlap (should NOT filter)
+My SSN is 123-45-6789 and my backup ID is 987-65-4321.
+CASE 9: Cross-type overlap with different confidences
+Jane Doe works at jane.doe@bigcompany.com as a senior engineer.
+CASE 10: Multiple overlapping entities in sequence
+Contact us at support@example.com or sales@example.com or visit example.com today.
+CASE 11: Credit card with expiration date overlapping
+Payment with 4111-1111-1111-1111 exp 12/25 was processed successfully.  Find me at canadian postal code L5M 4C4. With computer connection via 972.118.925.123.
+CASE 12: Multiple overlapping entities with different confidences
+Please contact us at support@example.com or sales@example.com or visit example.com today.

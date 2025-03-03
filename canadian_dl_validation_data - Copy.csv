@@ -1,0 +1,10 @@
+text,label
+Could not validate Ontario driver's license with ID F52463686911503.,"[{""start"": 52, ""end"": 67, ""text"": ""F52463686911503"", ""labels"": [""driver_license_number""]}]"
+Could not validate New Brunswick driver's license with ID 7000580.,"[{""start"": 58, ""end"": 65, ""text"": ""7000580"", ""labels"": [""driver_license_number""]}]"
+Please confirm your Nunavut driver's license: 908599.,"[{""start"": 46, ""end"": 52, ""text"": ""908599"", ""labels"": [""driver_license_number""]}]"
+Driver's license number 89269 issued in Prince Edward Island was verified successfully.,"[{""start"": 24, ""end"": 29, ""text"": ""89269"", ""labels"": [""driver_license_number""]}]"
+The Nova Scotia driving license RMXGL0505894698 was suspended due to traffic violations.,"[{""start"": 32, ""end"": 47, ""text"": ""RMXGL0505894698"", ""labels"": [""driver_license_number""]}]"
+"According to our records, your New Brunswick driver's license 9333384 expires next month.","[{""start"": 62, ""end"": 69, ""text"": ""9333384"", ""labels"": [""driver_license_number""]}]"
+Your application with Northwest Territories license 323747 has been approved.,"[{""start"": 52, ""end"": 58, ""text"": ""323747"", ""labels"": [""driver_license_number""]}]"
+Could not validate Ontario driver's license with ID Q7633-9155605910.,"[{""start"": 52, ""end"": 68, ""text"": ""Q7633-9155605910"", ""labels"": [""driver_license_number""]}]"
+Driver's license number P978508956695 issued in Quebec was verified successfully.,"[{""start"": 24, ""end"": 37, ""text"": ""P978508956695"", ""labels"": [""driver_license_number""]}]"
