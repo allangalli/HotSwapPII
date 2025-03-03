@@ -1,4 +1,4 @@
 .env
 canadian_dl_validation_data - Copy.csv
 canadian_dl_validation_data.csv
-**/__pycache__
+**/config/__pycache__
