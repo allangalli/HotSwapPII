@@ -2,7 +2,7 @@
 
 A comprehensive system for detecting and anonymizing personally identifiable information (PII) in text documents using various NER models.
 
-Solarized dark             |  Solarized Ocean
+Home Page             |  Results View
 :-------------------------:|:-------------------------:
 ![image](https://github.com/user-attachments/assets/35a91654-a2da-475e-91ab-e9f666bb8af5)  |  ![image](https://github.com/user-attachments/assets/bb0efddc-e6f8-4d56-a7d5-3aa5a2de1bb0)
 
