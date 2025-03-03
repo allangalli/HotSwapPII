@@ -1,4 +1,6 @@
 .env
+.gitignore
 canadian_dl_validation_data - Copy.csv
 canadian_dl_validation_data.csv
 **/config/__pycache__
+canadian-dl-generator.py
