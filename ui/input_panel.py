@@ -88,3 +88,26 @@ def render_input_panel(demo_text_path: str) -> Tuple[str, Dict]:
             # No file uploaded, use the default text
             text = demo_text if input_state["active_tab"] == 1 else text
     
+    
+    # Show a loading indicator if needed
+    if st.session_state.get("loading", False):
+        with st.spinner("Analyzing text..."):
+            pass
+    
+    # Process button
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col2:
+        process_button = st.button(
+            "Analyze Text",
+            type="primary",
+            use_container_width=True,
+        
+        )
+        
+        if process_button:
+            st.session_state["loading"] = True
+            input_state["process_clicked"] = True
+        else:
+            input_state["process_clicked"] = False
+    
+    return text, input_state
