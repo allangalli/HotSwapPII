@@ -11,6 +11,10 @@ from presidio_analyzer.nlp_engine import NlpEngine
 from models.spacy_engine import create_spacy_engine
 from models.transformers_engine import create_transformers_engine
 from models.gliner_engine import create_gliner_engine
+from models.custom_recognizers import (
+    create_canadian_postal_code_recognizer,
+    create_canadian_drivers_license_recognizer
+)
 
 logger = logging.getLogger(__name__)
 
@@ -36,14 +40,28 @@ def get_nlp_engine_and_registry(
     
     model_family = model_family.lower()
     
+    # Get NLP engine and registry based on model family
     if "spacy" in model_family:
-        return create_spacy_engine(model_path)
+        nlp_engine, registry = create_spacy_engine(model_path)
     elif "huggingface" in model_family:
-        return create_transformers_engine(model_path)
+        nlp_engine, registry = create_transformers_engine(model_path)
     elif "gliner" in model_family:
-        return create_gliner_engine(model_path)
+        nlp_engine, registry = create_gliner_engine(model_path)
     else:
         raise ValueError(f"Unsupported model family: {model_family}")
+    
+    # Add custom recognizers
+    logger.info("Adding custom recognizers")
+    
+    # Add Canadian postal code recognizer
+    canadian_postal_code_recognizer = create_canadian_postal_code_recognizer()
+    registry.add_recognizer(canadian_postal_code_recognizer)
+    
+    # Add Canadian driver's license recognizer
+    canadian_drivers_license_recognizer = create_canadian_drivers_license_recognizer()
+    registry.add_recognizer(canadian_drivers_license_recognizer)
+    
+    return nlp_engine, registry
 
 
 @st.cache_resource

@@ -39,43 +39,27 @@ OPENAI_DEFAULT_MODEL = "gpt-3.5-turbo-instruct"
 
 # Entity selection
 DEFAULT_ENTITY_SELECTION = [
-    "PERSON", "ORGANIZATION", "LOCATION", "EMAIL_ADDRESS", "PHONE_NUMBER", 
-    "CREDIT_CARD", "US_SSN", "DATE_TIME", "ADDRESS", 
-    "US_PASSPORT", "US_DRIVER_LICENSE", "PASSWORD","IBAN_CODE","US_BANK_NUMBER"
+    "NAME", "EMAIL_ADDRESS", "PHONE_NUMBER", "CREDIT_CARD", 
+    "US_SSN", "DATE_TIME", "DRIVER_LICENSE_NUMBER", "POSTAL_CODE"
 ]
 
 # Supported entity types with descriptions
 ENTITY_DESCRIPTIONS: Dict[str, str] = {
-    "PERSON": "Names of individuals",
-    "ORGANIZATION": "Companies, agencies, institutions",
-    "LOCATION": "Physical locations, cities, countries",
+    "NAME": "Names of individuals",
     "EMAIL_ADDRESS": "Email addresses",
     "PHONE_NUMBER": "Telephone and fax numbers",
     "CREDIT_CARD": "Credit card numbers",
     "DATE_TIME": "Dates and times",
-    "US_SSN": "US Social Security Numbers",
-    "US_PASSPORT": "US Passport numbers",
-    "US_DRIVER_LICENSE": "US Driver's License numbers",
-    "CAN_DRIVER_LICENSE": "Canadian Driver's License numbers",
-    "IP_ADDRESS": "IP addresses",
-    "ADDRESS": "Street addresses",
-    "IBAN_CODE": "International Bank Account Numbers",
-    "NRP": "Nationalities, religious, and political groups",
-    "URL": "Web URLs",
-    "AGE": "Age information",
-    "CRYPTO": "Cryptocurrency addresses",
-    "MEDICAL_LICENSE": "Medical license numbers",
-    "US_ITIN": "US Individual Taxpayer Identification Numbers",
-    "US_BANK_NUMBER": "US Bank account numbers",
-    "PASSWORD": "Passwords",
+    "US_SSN": "US Social Security Numbers (SSN)",
+    "DRIVER_LICENSE_NUMBER": "Driver's License numbers (US and Canadian)",
+    "POSTAL_CODE": "Postal codes (including Canadian format)",
     "GENERIC_PII": "Other personal identifiable information"
 }
 
 # Core allowed entities (limited for UI simplicity)
 CORE_ENTITIES: Set[str] = {
-    "PERSON", "ORGANIZATION", "LOCATION", "EMAIL_ADDRESS", "PHONE_NUMBER", 
-    "CREDIT_CARD", "US_SSN", "DATE_TIME", "IP_ADDRESS", "ADDRESS",
-    "US_PASSPORT", "US_DRIVER_LICENSE", "CAN_DRIVER_LICENSE", "PASSWORD",
+    "NAME", "EMAIL_ADDRESS", "PHONE_NUMBER", "CREDIT_CARD", 
+    "US_SSN", "DATE_TIME", "DRIVER_LICENSE_NUMBER", "POSTAL_CODE"
 }
 
 # Default for filtering overlapping entities
@@ -86,19 +70,13 @@ DEFAULT_OVERLAP_TOLERANCE = 5
 VALIDATION_TO_SYSTEM_MAPPING: Dict[str, str] = {
     'date': 'DATE_TIME',
     'time': 'DATE_TIME',
-    'name': 'PERSON',
-    'street_address': 'ADDRESS',
+    'name': 'NAME',
     'email': 'EMAIL_ADDRESS',
     'phone_number': 'PHONE_NUMBER',
     'ssn': 'US_SSN',
     'credit_card_number': 'CREDIT_CARD',
-    'passport_number': 'US_PASSPORT',
-    'driver_license_number': 'US_DRIVER_LICENSE',
-    'driver_license_CA': 'CAN_DRIVER_LICENSE',
-    'password': 'PASSWORD',
-    'company': 'ORGANIZATION',
-    'job_title': 'JOB_TITLE',
-    'account_number': 'ACCOUNT_NUMBER',
+    'driver_license_number': 'DRIVER_LICENSE_NUMBER',
+    'postal_code': 'POSTAL_CODE',
 }
 
 # System to validation entity mapping (reverse of the above)
@@ -106,33 +84,39 @@ SYSTEM_TO_VALIDATION_MAPPING: Dict[str, str] = {v: k for k, v in VALIDATION_TO_S
 
 # GLiNER entity mapping
 GLINER_ENTITY_MAPPING: Dict[str, str] = {
-    "person": "PERSON",
-    "name": "PERSON",
-    "organization": "ORGANIZATION",
-    "location": "LOCATION",
+    "person": "NAME",
+    "name": "NAME",
+    "organization": "GENERIC_PII",
+    "location": "GENERIC_PII",
     "email": "EMAIL_ADDRESS",
     "credit card number": "CREDIT_CARD",
     "phone number": "PHONE_NUMBER",
     "social security number": "US_SSN",
-    "passport number": "US_PASSPORT",
-    "driver's license number": "US_DRIVER_LICENSE",
-    "individual taxpayer identification number": "US_ITIN",
-    "ip address": "IP_ADDRESS",
-    "International Bank Account Number": "IBAN_CODE",
-    "Age": "AGE",
-    "debit card number": "CLIENT_CARD",
-    "client card number": "CLIENT_CARD",
-    "canadian social insurance number": "CAN_SIN",
-    "canadian passport number": "CAN_PASSPORT",
-    "canadian driver's license number": "CAN_DRIVER_LICENSE",
-    "canadian postal code": "CAN_POSTAL_CODE",
-    "MAC Address": "MAC_ADDRESS",
-    "Personal Address Excluding City, Province, Postal Code, Country": "ADDRESS",
-    "Company": "ORGANIZATION",
-    "Password": "PASSWORD",
-    "Job Title": "JOB_TITLE",
-    "Job Position": "JOB_TITLE",
-    "Account Number": "ACCOUNT_NUMBER",
+    "passport number": "GENERIC_PII",
+    "driver's license number": "DRIVER_LICENSE_NUMBER",
+    "individual taxpayer identification number": "GENERIC_PII",
+    "ip address": "GENERIC_PII",
+    "International Bank Account Number": "GENERIC_PII",
+    "Age": "GENERIC_PII",
+    "debit card number": "GENERIC_PII",
+    "client card number": "GENERIC_PII",
+    "canadian social insurance number": "US_SSN",
+    "canadian passport number": "GENERIC_PII",
+    "canadian driver's license number": "DRIVER_LICENSE_NUMBER",
+    "canadian postal code": "POSTAL_CODE",
+    "postal code": "POSTAL_CODE",
+    "zip code": "POSTAL_CODE",
+    "MAC Address": "GENERIC_PII",
+    "Personal Address": "GENERIC_PII",
+    "Address": "GENERIC_PII",
+    "Company": "GENERIC_PII",
+    "Password": "GENERIC_PII",
+    "Job Title": "GENERIC_PII",
+    "Job Position": "GENERIC_PII",
+    "Account Number": "GENERIC_PII",
+    "date": "DATE_TIME",
+    "date of birth": "DATE_TIME",
+    "birthdate": "DATE_TIME",
 }
 
 # Evaluation settings

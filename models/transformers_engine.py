@@ -32,8 +32,8 @@ def create_transformers_engine(model_path: str) -> Tuple[NlpEngine, RecognizerRe
         ],
         "ner_model_configuration": {
             "model_to_presidio_entity_mapping": {
-                "PER": "PERSON",
-                "PERSON": "PERSON",
+                "PER": "NAME",
+                "PERSON": "NAME",
                 "LOC": "LOCATION",
                 "LOCATION": "LOCATION",
                 "GPE": "LOCATION",

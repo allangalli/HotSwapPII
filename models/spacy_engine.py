@@ -27,8 +27,8 @@ def create_spacy_engine(model_path: str) -> Tuple[NlpEngine, RecognizerRegistry]
         "models": [{"lang_code": "en", "model_name": model_path}],
         "ner_model_configuration": {
             "model_to_presidio_entity_mapping": {
-                "PER": "PERSON",
-                "PERSON": "PERSON",
+                "PER": "NAME",
+                "PERSON": "NAME",
                 "NORP": "NRP",
                 "FAC": "FACILITY",
                 "LOC": "LOCATION",
