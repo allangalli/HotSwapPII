@@ -8,13 +8,10 @@ import streamlit as st
 from presidio_analyzer import AnalyzerEngine, RecognizerRegistry
 from presidio_analyzer.nlp_engine import NlpEngine
 
-from models.spacy_engine import create_spacy_engine
-from models.transformers_engine import create_transformers_engine
-from models.gliner_engine import create_gliner_engine
-from models.custom_recognizers import (
-    create_canadian_postal_code_recognizer,
-    create_canadian_drivers_license_recognizer
-)
+from models.spacy_engine import create_spacy_engine, get_spacy_model
+from models.transformers_engine import create_transformers_engine, get_huggingface_model
+from models.gliner_engine import create_gliner_engine, get_gliner_model
+from config.config import MODEL_DETAILS
 
 logger = logging.getLogger(__name__)
 
@@ -40,28 +37,14 @@ def get_nlp_engine_and_registry(
     
     model_family = model_family.lower()
     
-    # Get NLP engine and registry based on model family
     if "spacy" in model_family:
-        nlp_engine, registry = create_spacy_engine(model_path)
+        return create_spacy_engine(model_path)
     elif "huggingface" in model_family:
-        nlp_engine, registry = create_transformers_engine(model_path)
+        return create_transformers_engine(model_path)
     elif "gliner" in model_family:
-        nlp_engine, registry = create_gliner_engine(model_path)
+        return create_gliner_engine(model_path)
     else:
         raise ValueError(f"Unsupported model family: {model_family}")
-    
-    # Add custom recognizers
-    logger.info("Adding custom recognizers")
-    
-    # Add Canadian postal code recognizer
-    canadian_postal_code_recognizer = create_canadian_postal_code_recognizer()
-    registry.add_recognizer(canadian_postal_code_recognizer)
-    
-    # Add Canadian driver's license recognizer
-    canadian_drivers_license_recognizer = create_canadian_drivers_license_recognizer()
-    registry.add_recognizer(canadian_drivers_license_recognizer)
-    
-    return nlp_engine, registry
 
 
 @st.cache_resource
@@ -84,7 +67,7 @@ def get_analyzer_engine(
     return analyzer
 
 
-def extract_model_info(model_selection: str) -> Tuple[str, str]:
+def extract_model_info(model_selection: str) -> Tuple[str, str, str]:
     """
     Extract model family and path from a model selection string.
     
@@ -92,49 +75,24 @@ def extract_model_info(model_selection: str) -> Tuple[str, str]:
         model_selection: Model selection in format 'Family/model_path'
         
     Returns:
-        Tuple of (model_family, model_path)
+        Tuple of (base_model, model_family, model_path)
     """
-    if "/" not in model_selection:
-        return model_selection, model_selection
+    try:
+        model_details = MODEL_DETAILS[model_selection]
+    except KeyError as e:
+        st.error(f"Model details don't exist for model {model_selection}: {e}")
         
-    parts = model_selection.split("/", 1)
-    model_family = parts[0]
-    model_path = "/".join(parts[1:])
+    base_model = model_details["base_model"]
+    model_family = model_details["model_family"]
+    model_path = model_details["model_path"]
     
-    return model_family, model_path
+    return base_model, model_family, model_path
 
-
-def get_supported_entities(model_family: str, model_path: str) -> Dict[str, str]:
-    """
-    Get the supported entities for a given model along with their descriptions.
-    
-    Args:
-        model_family: The model family (spacy, huggingface, gliner)
-        model_path: The specific model path or name
-        
-    Returns:
-        Dictionary mapping entity names to their descriptions
-    """
-    from config.config import ENTITY_DESCRIPTIONS, CORE_ENTITIES
-    
-    # Get all supported entities from the analyzer
-    analyzer = get_analyzer_engine(model_family, model_path)
-    supported_entities = set(analyzer.get_supported_entities())
-    
-    # Add GENERIC_PII
-    supported_entities.add("GENERIC_PII")
-    
-    # Filter to core entities for UI simplicity, but keep any others the model supports
-    result_entities = {}
-    
-    # First add core entities that are supported
-    for entity in CORE_ENTITIES:
-        if entity in supported_entities:
-            result_entities[entity] = ENTITY_DESCRIPTIONS.get(entity, "")
-            
-    # Then add any other supported entities
-    for entity in supported_entities:
-        if entity not in result_entities:
-            result_entities[entity] = ENTITY_DESCRIPTIONS.get(entity, "")
-    
-    return result_entities
+def get_independent_model(model_family: str, model_path: str):
+    if model_family == "spaCy":
+        model = get_spacy_model(model_path)
+    elif model_family == "HuggingFace":
+        model = get_huggingface_model(model_path)
+    elif model_family == "GLiNER":
+        model = get_gliner_model(model_path)
+    return model

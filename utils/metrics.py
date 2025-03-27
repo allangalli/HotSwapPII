@@ -3,6 +3,8 @@ Metrics calculation utilities for the HotSwapPII.
 """
 import logging
 from typing import Any, Dict, List, Optional, Set, Tuple
+from nervaluate import Evaluator
+from config.config import GROUND_TRUTH_TAGS
 
 import numpy as np
 import pandas as pd
@@ -355,6 +357,13 @@ def calculate_confidence_threshold_curve(
             'false_negatives': metrics['false_negatives'],
             'total_predictions': len(filtered_preds)
         })
-    
+
     return pd.DataFrame(results)
-    return pd.DataFrame(results)
+
+def get_nervaluate_metrics(true, pred):
+    evaluator = Evaluator(true, pred, tags=GROUND_TRUTH_TAGS)
+    # evaluator = Evaluator(true, pred, tags=VALIDATION_TO_SYSTEM_MAPPING.keys())
+    # Returns overall metrics and metrics for each tag
+    results, results_per_tag, result_indices, result_indices_by_tag = evaluator.evaluate()
+
+    return results, results_per_tag, result_indices, result_indices_by_tag

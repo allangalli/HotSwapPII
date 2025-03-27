@@ -11,11 +11,11 @@ from streamlit_tags import st_tags
 from config.config import (ALLOW_CUSTOM_MODELS, DEFAULT_ANONYMIZATION_METHOD,
                            DEFAULT_ENTITY_SELECTION, DEFAULT_EXCLUDE_OVERLAPS,
                            DEFAULT_MASK_CHAR, DEFAULT_MASK_CHARS_COUNT,
-                           DEFAULT_MODEL, DEFAULT_MODEL_INDEX,
-                           DEFAULT_OVERLAP_TOLERANCE, DEFAULT_THRESHOLD,
+                           DEFAULT_MODEL_INDEX, DEFAULT_OVERLAP_TOLERANCE, DEFAULT_THRESHOLD,
                            ENTITY_DESCRIPTIONS, MODEL_OPTIONS,
                            OPENAI_DEFAULT_MODEL)
-from models.model_factory import extract_model_info, get_supported_entities
+from models.model_factory import extract_model_info
+from core.detector import get_supported_entities
 from utils.synthetic_data import OpenAIParams
 
 logger = logging.getLogger(__name__)
@@ -62,6 +62,10 @@ def render_model_settings() -> Dict:
     """
     st.subheader("Model Selection")
     
+    # Show custom pipeline notice if active
+    if "use_custom_pipeline" in st.session_state and st.session_state["use_custom_pipeline"]:
+        st.warning("⚠️ Custom Pipeline Active ⚠️\n\nThe model selection below will be ignored. Entity types will be processed by the models configured in the Custom Pipeline tab.")
+    
     # Model selection
     model_help = """
     Select which Named Entity Recognition (NER) model to use for PII detection, 
@@ -83,13 +87,14 @@ def render_model_settings() -> Dict:
         )
         model_path = st.text_input("Model name or path", value="")
     else:
-        model_family, model_path = extract_model_info(model_selection)
+        base_model, model_family, model_path = extract_model_info(model_selection)
     
     st.caption("Note: Models might take some time to download.")
     
     # Return settings
     return {
         "model_selection": model_selection,
+        "base_model": base_model,
         "model_family": model_family,
         "model_path": model_path,
     }

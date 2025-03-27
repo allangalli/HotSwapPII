@@ -126,4 +126,3 @@ def create_annotated_tokens(
         tokens.append(text[current_pos:])
     
     return tokens
-    return tokens

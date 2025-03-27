@@ -1,0 +1,92 @@
+recognizers:
+  -
+    name: "MAC Address Recognizer"
+    supported_language: "en"
+    patterns:
+      -
+         name: "mac_address"
+         regex: "^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})|([0-9a-fA-F]{4}\\.[0-9a-fA-F]{4}\\.[0-9a-fA-F]{4})|[0-9A-Fa-f]{12}$"
+         score: 0.5
+    context:
+     - mac
+     - address
+    supported_entity: "MAC_ADDRESS"
+  -
+    name: "Canadian SIN"
+    supported_language: "en"
+    patterns:
+      -
+        name: "sin"
+        regex: "\\d{9}|\\d{3}-\\d{3}-\\d{3}"
+        score: 0.8
+    context:
+      - sin
+      - number
+    supported_entity: "CA_SIN"
+  -
+    name: "Canadian Postal Code"
+    supported_language: "en"
+    patterns:
+      -
+        name: "postal_code"
+        regex: "[ABCEGHJ-NPRSTVXYabceghj-nprstvxy]\\d[ABCEGHJ-NPRSTV-Zabceghj-nprstv-z][ -]?\\d[ABCEGHJ-NPRSTV-Zabceghj-nprstv-z]\\d"
+        score: 0.8
+    context:
+      - postal
+      - code
+    supported_entity: "POSTAL_CODE"
+  - name: "US Zip Code"
+    supported_language: "en"
+    patterns:
+      - name: "zip_code"
+        regex: "\\d{5}"
+        score: 0.9
+    context:
+      - zip
+      - code
+    supported_entity: "ZIP_CODE"
+#  -
+#    name: "Canadian Province"
+#    supported_language: "en"
+#    supported_entity: "PROVINCE"
+#    deny_list:
+#      - "AB"
+#      - "Alberta"
+#      - "BC"
+#      - "British Columbia"
+#      - "MB"
+#      - "Manitoba"
+#      - "NS"
+#      - "Nova Scotia"
+#      - "NB"
+#      - "New Brunswick"
+#      - "NL"
+#      - "Newfoundland"
+#      - "Labrador"
+#      - "PE"
+#      - "PEI"
+#      - "Prince Edward Island"
+#      - "QC"
+#      - "Quebec"
+#      - "ON"
+#      - "Ontario"
+#      - "SK"
+#      - "Saskatchewan"
+#      - "NT"
+#      - "Northwest Territories"
+#      - "YT"
+#      - "Yukon"
+#      - "NU"
+#      - "Nunavut"
+#  - name: "US State"
+#    supported_language: "en"
+#    supported_entity: "STATE"
+#    deny_list:
+#      - "NY"
+#      - "New York"
+#      - "NJ"
+#      - "New Jersey"
+#      - "WI"
+#      - "Wisconsin"
+#      - "TX"
+#      - "Texas"

@@ -18,6 +18,7 @@ streamlit-tags = "^1.2.8"
 openai = "^1.53.0"
 en_core_web_lg = {url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.8.0/en_core_web_lg-3.8.0.tar.gz"}
 en_core_web_sm = {url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0.tar.gz"}
+debugpy = "^1.8.13"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.5"

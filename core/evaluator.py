@@ -7,15 +7,19 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 import streamlit as st
-from presidio_analyzer import RecognizerResult
+from presidio_analyzer import RecognizerResult, EntityRecognizer, AnalyzerEngine
 
 from config.config import SYSTEM_TO_VALIDATION_MAPPING, VALIDATION_TO_SYSTEM_MAPPING
-from core.detector import analyze_text, filter_overlapping_entities
+from core.detector import analyze_text, filter_overlapping_entities, initialize_analyzer_engine
+from models.model_factory import get_independent_model
 from utils.metrics import (
     calculate_confidence_threshold_curve,
     calculate_entity_type_metrics,
     calculate_overlap_match_metrics,
+    get_nervaluate_metrics
 )
+
+from config.config import MODEL_ENTITIES_TO_STANDARDIZED_ENTITY_MAPPING
 
 logger = logging.getLogger(__name__)
 
@@ -77,12 +81,13 @@ def process_validation_data(file) -> Tuple[Optional[pd.DataFrame], Optional[str]
 
 
 def analyze_validation_text(
-    model_family: str,
-    model_path: str,
+    _analyzer: AnalyzerEngine,
     text: str,
     threshold: float,
+    entities: Optional[List[str]] = None,
     exclude_overlaps: bool = True,
-    overlap_tolerance: int = 1
+    overlap_tolerance: int = 1,
+    ad_hoc_recognizers: List[EntityRecognizer] = None
 ) -> List[Dict[str, Any]]:
     """
     Analyze text from validation dataset.
@@ -100,45 +105,44 @@ def analyze_validation_text(
     """
     try:
         # Get system entities to detect (all from validation mapping)
-        system_entities = list(set(VALIDATION_TO_SYSTEM_MAPPING.values()))
-        
+        if entities is None:
+            entities = list(set(VALIDATION_TO_SYSTEM_MAPPING.values()))
+
         # Analyze the text
         results = analyze_text(
-            model_family=model_family,
-            model_path=model_path,
+            _analyzer=_analyzer,
             text=text,
-            entities=system_entities,
+            entities=entities,
             language="en",
             score_threshold=threshold,
+            ad_hoc_recognizers=ad_hoc_recognizers
         )
-        
         # Filter overlapping entities if needed
-        if exclude_overlaps:
-            results = filter_overlapping_entities(
-                results=results,
-                exclude_overlaps=exclude_overlaps,
-                overlap_tolerance=overlap_tolerance
-            )
-        
+        # if exclude_overlaps:
+        #     results = filter_overlapping_entities(
+        #         results=results,
+        #         exclude_overlaps=exclude_overlaps,
+        #         overlap_tolerance=overlap_tolerance
+        #     )
+
         # Convert to spans
         spans = []
         for res in results:
             # Map system entity type to validation entity type
-            mapped_label = res.entity_type
-            for val_type, sys_type in VALIDATION_TO_SYSTEM_MAPPING.items():
-                if sys_type == res.entity_type:
-                    mapped_label = val_type
-                    break
-            
+            # mapped_label = res.entity_type
+            # for val_type, sys_type in VALIDATION_TO_SYSTEM_MAPPING.items():
+            #     if sys_type == res.entity_type:
+            #         mapped_label = val_type
+            #         break
+
             # Create span
             spans.append({
                 "start": int(res.start),
                 "end": int(res.end),
-                "label": mapped_label,
+                "label": MODEL_ENTITIES_TO_STANDARDIZED_ENTITY_MAPPING.get(res.entity_type, 'UNKNOWN'), # mapped_label,
                 "original_label": res.entity_type,
                 "score": float(res.score)
             })
-        
         # Sort by start position
         spans.sort(key=lambda x: x["start"])
         
@@ -150,19 +154,22 @@ def analyze_validation_text(
 
 def evaluate_model(
     df: pd.DataFrame,
+    base_model: str,
     model_family: str,
     model_path: str,
     threshold: float,
+    entities: Optional[List[str]] = None,
     exclude_overlaps: bool = True,
     overlap_tolerance: int = 1,
     overlap_threshold: float = 0.5,
     progress_callback: Optional[Callable[[float], None]] = None
-) -> Tuple[pd.DataFrame, Dict[str, Any], pd.DataFrame]:
+) -> Tuple[pd.DataFrame, Dict[str, Any], pd.DataFrame, Dict[str, Any], Dict[str, Any]]:
     """
     Evaluate model on validation dataset.
     
     Args:
         df: DataFrame with validation data
+        base_model: presidio or independent
         model_family: The model family (spacy, huggingface, gliner)
         model_path: The specific model path or name
         threshold: Confidence threshold for detection
@@ -180,31 +187,45 @@ def evaluate_model(
     all_predictions = []
     
     total_rows = len(df)
-    
+
+    if base_model == "presidio":
+        analyzer, ad_hoc_recognizers = initialize_analyzer_engine(
+            model_family=model_family,
+            model_path=model_path
+        )
+
+    else:
+        analyzer = get_independent_model(
+            model_family=model_family,
+            model_path=model_path
+        )
+        ad_hoc_recognizers = []
+
     # Process each text in the dataset
     for idx, row in df.iterrows():
         # Get text and ground truth
         text = row['text']
         ground_truth = row.get('processed_annotations', [])
-        
+
         # Update progress if callback provided
         if progress_callback:
             progress_callback((idx + 1) / total_rows)
-        
+
         # Skip invalid texts
         if not isinstance(text, str) or not text.strip():
             continue
-        
+
         # Analyze text
         predictions = analyze_validation_text(
-            model_family=model_family,
-            model_path=model_path,
+            _analyzer=analyzer,
             text=text,
+            entities=entities,
             threshold=threshold,
             exclude_overlaps=exclude_overlaps,
-            overlap_tolerance=overlap_tolerance
+            overlap_tolerance=overlap_tolerance,
+            ad_hoc_recognizers=ad_hoc_recognizers
         )
-        
+
         # Calculate metrics for this text using the metrics utility
         metrics = calculate_overlap_match_metrics(
             ground_truth=ground_truth,
@@ -212,7 +233,7 @@ def evaluate_model(
             iou_threshold=overlap_threshold,
             require_type_match=True
         )
-        
+
         # Add to results
         results.append({
             "text": text,
@@ -220,17 +241,20 @@ def evaluate_model(
             "predictions": predictions,
             **metrics
         })
-        
+
         # Store for overall metrics
         all_ground_truth.append(ground_truth)
         all_predictions.append(predictions)
-    
+
     # Calculate entity-type metrics using the metrics utility
     entity_metrics_df = calculate_entity_type_metrics(
         all_ground_truth=all_ground_truth,
         all_predictions=all_predictions,
         iou_threshold=overlap_threshold
     )
+
+    # Calculate entity-type metrics using the Nervaluate Library
+    nervaluate_metrics, nervaluate_metrics_by_tag, _, _ = get_nervaluate_metrics(all_ground_truth, all_predictions)
     
     # Calculate overall metrics by aggregating
     overall_metrics = {
@@ -257,8 +281,8 @@ def evaluate_model(
         overall_metrics['precision'] = tp / (tp + fp) if (tp + fp) > 0 else 0
         overall_metrics['recall'] = tp / (tp + fn) if (tp + fn) > 0 else 0
         overall_metrics['f1'] = 2 * (overall_metrics['precision'] * overall_metrics['recall']) / (overall_metrics['precision'] + overall_metrics['recall']) if (overall_metrics['precision'] + overall_metrics['recall']) > 0 else 0
-    
-    return pd.DataFrame(results), overall_metrics, entity_metrics_df
+
+    return pd.DataFrame(results), overall_metrics, entity_metrics_df, nervaluate_metrics, nervaluate_metrics_by_tag
 
 
 def analyze_threshold_sensitivity(

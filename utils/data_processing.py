@@ -5,8 +5,8 @@ import json
 import logging
 from typing import Dict, List, Optional, Tuple, Union
 
-import streamlit as st
 from presidio_analyzer import RecognizerResult
+from config.config import MODEL_ENTITIES_TO_STANDARDIZED_ENTITY_MAPPING
 
 logger = logging.getLogger(__name__)
 
@@ -82,3 +82,9 @@ def get_file_upload_info(uploaded_file) -> Dict[str, str]:
     except Exception as e:
         logger.error(f"Error getting file info: {e}")
         return {"error": str(e)}
+
+def get_standardized_pii_label(label):
+    try:
+        return MODEL_ENTITIES_TO_STANDARDIZED_ENTITY_MAPPING[label]
+    except KeyError:
+        return label

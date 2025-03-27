@@ -9,10 +9,17 @@ import os
 from pathlib import Path
 
 import streamlit as st
+from django.templatetags.i18n import language
 
 from config.config import APP_DESCRIPTION, APP_TITLE, DEFAULT_DEMO_TEXT_PATH
-from core.detector import analyze_text, filter_overlapping_entities
+from core.detector import (analyze_text, filter_overlapping_entities, 
+                          initialize_analyzer_engine, process_with_custom_pipeline)
+from models.model_factory import get_independent_model
+
 from ui.evaluation_panel import render_evaluation_panel
+from ui.benchmarks_panel import render_benchmarks_panel
+from ui.model_comparison_panel import render_model_comparison_panel
+from ui.custom_pipeline_panel import render_custom_pipeline_panel
 from ui.input_panel import render_input_panel
 from ui.results_panel import render_results_panel
 from ui.sidebar import render_sidebar
@@ -45,12 +52,14 @@ def main():
         st.session_state["show_results"] = False
     if "loading" not in st.session_state:
         st.session_state["loading"] = False
+    if "use_custom_pipeline" not in st.session_state:
+        st.session_state["use_custom_pipeline"] = False
     
     # Render sidebar and get settings
     settings = render_sidebar()
     
     # Render tabs for main content
-    tab_titles = ["PII Detection", "Model Evaluation"]
+    tab_titles = ["PII Detection", "Model Evaluation", "Model Dataset Benchmarks", "Model Comparison", "Custom Pipeline"]
     tabs = st.tabs(tab_titles)
     
     # PII Detection tab
@@ -62,6 +71,7 @@ def main():
         if input_state.get("process_clicked", False):
             with st.spinner("Analyzing text..."):
                 # Get settings from sidebar
+                base_model = settings["base_model"]
                 model_family = settings["model_family"]
                 model_path = settings["model_path"]
                 selected_entities = settings["selected_entities"]
@@ -75,23 +85,48 @@ def main():
                 regex_entity_type = settings["regex_entity_type"]
                 regex_score = settings["regex_score"]
                 regex_context = settings["regex_context"]
-                
-                # Run detection
-                results = analyze_text(
-                    model_family=model_family,
-                    model_path=model_path,
-                    text=text,
-                    entities=selected_entities,
-                    language="en",
-                    score_threshold=threshold,
-                    return_decision_process=return_decision_process,
-                    allow_list=allow_list,
-                    deny_list=deny_list,
-                    regex_pattern=regex_pattern,
-                    regex_entity_type=regex_entity_type,
-                    regex_score=regex_score,
-                    regex_context=regex_context,
-                )
+
+                # Check if custom pipeline is selected
+                if "use_custom_pipeline" in st.session_state and st.session_state["use_custom_pipeline"] and "custom_pipeline" in settings:
+                    st.info("Using custom pipeline for entity detection")
+                    
+                    # Get the custom pipeline configuration
+                    custom_pipeline = settings["custom_pipeline"]
+                    
+                    # Process text with the custom pipeline
+                    results = process_with_custom_pipeline(
+                        text=text,
+                        custom_pipeline=custom_pipeline,
+                        settings=settings
+                    )
+                elif base_model == "presidio":
+                    analyzer, ad_hoc_recognizers = initialize_analyzer_engine(
+                        model_family=model_family,
+                        model_path=model_path,
+                        deny_list=deny_list,
+                        regex_pattern=regex_pattern,
+                        regex_entity_type=regex_entity_type,
+                        regex_score=regex_score,
+                        regex_context=regex_context
+                    )
+
+                    # Run detection
+                    results = analyze_text(
+                        _analyzer=analyzer,
+                        text=text,
+                        entities=selected_entities,
+                        language="en",
+                        score_threshold=threshold,
+                        return_decision_process=return_decision_process,
+                        allow_list=allow_list,
+                        ad_hoc_recognizers=ad_hoc_recognizers,
+                    )
+                else:
+                    model = get_independent_model(
+                        model_family=model_family,
+                        model_path=model_path
+                    )
+                    results = model.analyze(text=text, entities=selected_entities, language='en')
                 
                 # Filter overlapping entities if needed
                 if exclude_overlaps:
@@ -120,6 +155,18 @@ def main():
     # Model Evaluation tab
     with tabs[1]:
         render_evaluation_panel(settings)
+
+    # Model Benchmarks tab
+    with tabs[2]:
+        render_benchmarks_panel(settings)
+
+    # Model Comparison tab
+    with tabs[3]:
+        render_model_comparison_panel(settings)
+    
+    # Custom Pipeline tab
+    with tabs[4]:
+        render_custom_pipeline_panel(settings)
     
     # Footer
     st.markdown("---")
