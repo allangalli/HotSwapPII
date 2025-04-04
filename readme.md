@@ -6,8 +6,6 @@ Home Page             |  Results View
 :-------------------------:|:-------------------------:
 ![image](https://github.com/user-attachments/assets/35a91654-a2da-475e-91ab-e9f666bb8af5)  |  ![image](https://github.com/user-attachments/assets/bb0efddc-e6f8-4d56-a7d5-3aa5a2de1bb0)
 
-
-
 ## Overview
 
 This application provides an interactive interface for detecting PII entities in text with features including:
@@ -24,7 +22,8 @@ This application provides an interactive interface for detecting PII entities in
 ### Using Poetry (Recommended)
 
 1. Clone this repository
-2. Install dependencies with Poetry:
+2. Create a virtual environment
+3. Install dependencies with Poetry:
 
 ```bash
 # Install Poetry if needed
