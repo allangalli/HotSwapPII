@@ -65,9 +65,6 @@ def get_spacy_model(model_path: str):
 
     # Load models
     nlp_spacy = spacy.load(model_path)
-    print(nlp_spacy._path)
-    print(nlp_spacy.get_pipe("ner"))
-    print(nlp_spacy.get_pipe("ner").labels)
 
     nlp_spacy.analyze = lambda text, entities, language, score_threshold=None, return_decision_process=None, allow_list=None, ad_hoc_recognizers=None: spacy_pii_detection(nlp_spacy, text)
 

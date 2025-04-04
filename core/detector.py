@@ -8,7 +8,7 @@ import streamlit as st
 from presidio_analyzer import (Pattern, PatternRecognizer,
                                RecognizerResult, AnalyzerEngine, RecognizerRegistry, EntityRecognizer)
 
-from models.model_factory import get_analyzer_engine
+from models.model_factory import get_analyzer_engine, get_independent_model
 from config.config import MODEL_DETAILS
 
 logger = logging.getLogger(__name__)
@@ -175,15 +175,18 @@ def process_with_custom_pipeline(
         logger.info(f"Processing with model {model_name} for entity types: {entity_types}")
         
         # Initialize analyzer for this model
-        analyzer, ad_hoc_recognizers = initialize_analyzer_engine(
-            model_family=model_family,
-            model_path=model_path,
-            deny_list=deny_list,
-            regex_pattern=regex_pattern,
-            regex_entity_type=regex_entity_type,
-            regex_score=regex_score,
-            regex_context=regex_context
-        )
+        if base_model == "presidio":
+            analyzer, ad_hoc_recognizers = initialize_analyzer_engine(
+                model_family=model_family,
+                model_path=model_path
+            )
+
+        else:
+            analyzer = get_independent_model(
+                model_family=model_family,
+                model_path=model_path
+            )
+            ad_hoc_recognizers = []
         
         # Process text with this model
         if base_model == "presidio":

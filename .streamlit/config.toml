@@ -1,0 +1,22 @@
+[theme]
+primaryColor = "#0052CC"  # RBC Blue
+backgroundColor = "#FFFFFF"  # White
+secondaryBackgroundColor = "#F8F9FA"  # Light Gray
+textColor = "#4A4A4A"  # Dark Gray
+font = "sans serif"
+base="light"
+
+[server]
+enableXsrfProtection = true
+enableCORS = false
+enableWebsocketCompression = false
+
+[browser]
+gatherUsageStats = false
+
+[runner]
+fastRerenderThreshold = 1000
+
+[client]
+toolbarMode = "minimal"
+showErrorDetails = false 

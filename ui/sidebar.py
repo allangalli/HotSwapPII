@@ -259,11 +259,11 @@ def render_advanced_settings() -> Dict:
         )
     
     # Decision process
-    return_decision_process = st.checkbox(
-        "Show detection reasoning",
-        value=False,
-        help="Add detection reasoning to the findings table",
-    )
+    return_decision_process = False #st.checkbox(
+    #     "Show detection reasoning",
+    #     value=False,
+    #     help="Add detection reasoning to the findings table",
+    # )
     
     # Allow and deny lists
     with st.expander("Allow and Deny Lists", expanded=False):

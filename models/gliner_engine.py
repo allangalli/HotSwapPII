@@ -92,7 +92,6 @@ def create_gliner_engine(model_path: str) -> Tuple[NlpEngine, RecognizerRegistry
     # Remove SpaCy recognizer to avoid conflicts
     registry.remove_recognizer("SpacyRecognizer")
 
-    print('engine', nlp_engine)
     return nlp_engine, registry
 
 def get_gliner_model(model_path: str, options: Dict[str, any] = None):

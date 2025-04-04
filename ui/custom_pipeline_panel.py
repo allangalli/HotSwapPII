@@ -43,7 +43,7 @@ def get_entity_types_from_benchmark_results(file_path: str) -> List[str]:
         # The first model key doesn't matter, we just want entity types
         model_key = list(filtered_keys)[0]
         # Remove 'overall' from entity types
-        entity_types = [et for et in data[model_key].keys() if et != 'overall']
+        entity_types = [et for et in data[model_key].keys() if et not in ['overall', 'rows', 'time_taken']]
         return entity_types
     except Exception as e:
         logger.error(f"Error loading entity types from {file_path}: {e}")
@@ -179,7 +179,7 @@ def render_custom_pipeline_panel(settings: Dict) -> None:
             st.session_state.use_custom_pipeline = False
             if "custom_pipeline" in settings:
                 del settings["custom_pipeline"]
-            st.experimental_rerun()
+            st.rerun()
     else:
         st.info("⚠️ Custom pipeline is currently INACTIVE")
 
@@ -210,9 +210,18 @@ def render_custom_pipeline_panel(settings: Dict) -> None:
     
     # Create a table for best models
     st.subheader("Best Performing Models by Entity Type")
-    
+
+    def filter_out_singular_metrics(pair):
+        unwanted_keys = ['rows', 'time_taken']
+        key, value = pair
+        if key in unwanted_keys:
+            return False
+        else:
+            return True
+    filtered_best_models = dict(filter(filter_out_singular_metrics, best_models.items()))
+
     best_model_data = []
-    for entity_type, model_info in best_models.items():
+    for entity_type, model_info in filtered_best_models.items():
         model_display_name = get_model_display_name(model_info['model'])
         best_model_data.append({
             "Entity Type": entity_type,
@@ -238,7 +247,7 @@ def render_custom_pipeline_panel(settings: Dict) -> None:
         st.session_state.custom_pipeline_models = {}
 
         # Initialize with best models
-        for entity_type, model_info in best_models.items():
+        for entity_type, model_info in filtered_best_models.items():
             model_display_name = get_model_display_name(model_info['model'])
             st.session_state.custom_pipeline_models[entity_type] = model_display_name
 
@@ -247,7 +256,7 @@ def render_custom_pipeline_panel(settings: Dict) -> None:
         col_idx = i % num_cols
         with cols[col_idx]:
             # Get best model for this entity type
-            best_model_name = get_model_display_name(best_models.get(entity_type, {}).get('model', MODEL_OPTIONS[0]))
+            best_model_name = get_model_display_name(filtered_best_models.get(entity_type, {}).get('model', MODEL_OPTIONS[0]))
 
             # Create dropdown with model options
             selected_model = st.selectbox(
@@ -262,11 +271,13 @@ def render_custom_pipeline_panel(settings: Dict) -> None:
 
     # Add button to use the custom pipeline
     if st.button("Apply Custom Pipeline", type="primary"):
-        st.session_state.use_custom_pipeline = True
-        st.success("Custom pipeline configured! Use the PII Detection tab to process text with this pipeline.")
-
         # Store custom pipeline config in settings
         settings["custom_pipeline"] = st.session_state.custom_pipeline_models
+        
+        # Update session state and rerun
+        st.session_state.use_custom_pipeline = True
+        st.success("Custom pipeline configured! Use the PII Detection tab to process text with this pipeline.")
+        st.rerun()
 
     # Display the current custom pipeline configuration
     st.subheader("Current Custom Pipeline Configuration")
@@ -281,5 +292,9 @@ def render_custom_pipeline_panel(settings: Dict) -> None:
 
         pipeline_df = pd.DataFrame(pipeline_data)
         st.dataframe(pipeline_df, use_container_width=True, hide_index=True)
+        
+        # Add a warning if pipeline is active but configuration has changed
+        if "custom_pipeline" in settings and settings["custom_pipeline"] != st.session_state.custom_pipeline_models:
+            st.warning("⚠️ Custom pipeline configuration has changed. Click 'Apply Custom Pipeline' to update.")
     else:
         st.info("No custom pipeline configured yet. Select models for each entity type above.")

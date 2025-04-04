@@ -15,6 +15,7 @@ DEFAULT_DEMO_TEXT_PATH = "data/demo_text.txt"
 DEFAULT_MODEL_INDEX = 0
 DEFAULT_THRESHOLD = 0.40
 
+
 DEFAULT_ADD_TO_BENCHMARK = True
 
 # Available models
@@ -108,40 +109,35 @@ MODEL_OPTIONS_TO_BENHCMARKS_KEY: Dict[str, str] = {
 DATASET_OPTIONS = [
     "1. Gretel AI Generated PII data",
     "2. Different Gretel AI Generated PII data",
-    "3. Generated Faker data",
-    "4. Generated data with variation (Deepseek)",
-    "5. Simple generated data",
-    "6. Enron email data",
+    "3. Simple generated data",
+    "4. Generated data with variation",
+    "5. Enron email data",
 ]
 
 # Available benchmark datasets
 DATASET_DESCRIPTIONS = [
     "500 rows from a Gretel AI Generated PII dataset. Gretel AI is a data generation software.",
-    "2. Different Gretel AI Generated PII data",
-    "3. Generated Faker data",
-    "4. Generated Faker data with variation",
-    "5. Simple generated data",
-    "6. Enron email data",
-    "7. Deepseek generated data"
+    "Different Gretel AI Generated PII data",
+    "Simple generated data",
+    "Generated data with variation",
+    "Enron email data",
 ]
 
 # Available benchmark datasets
 DATASET_SAMPLE_FILE_PATH = [
     "./data/benchmark_datasets/1_original_gretel_ai_conformance_data_500.csv",
     "./data/benchmark_datasets/2_another_gretel_ai_data_500.csv",
-    "",
-    "./data/benchmark_datasets/6_fake_data_with_variance_final.csv",
-    "./data/benchmark_datasets/7_simple_generated_data_500.csv",
-    "./data/benchmark_datasets/8_enron_data.csv"
+    "./data/benchmark_datasets/3_simple_generated_data_500.csv",
+    "./data/benchmark_datasets/4_fake_data_with_variance_final.csv",
+    "./data/benchmark_datasets/5_enron_data.csv"
 ]
 
 DATASET_BENCHMARK_RESULTS_FILE_PATH = [
     "./data/benchmark_results/1_original_gretel_ai_conformance_data_500_results.json",
-    "./data/benchmark_results/2_another_gretel_ai_data_500_results.json",
-    "",
-    "./data/benchmark_results/6_fake_data_with_variance_final_results.json",
-    "./data/benchmark_results/7_simple_generated_data_500_results.json",
-    "./data/benchmark_results/8_enron_data_results.json"
+    "./data/benchmark_results/2_second_gretel_ai_data_500_results.json",
+    "./data/benchmark_results/3_simple_generated_data_500_results.json",
+    "./data/benchmark_results/4_fake_data_with_variance_final_results.json",
+    "./data/benchmark_results/5_enron_data_results.json"
 ]
 
 # Allow using custom models (controlled by env var)

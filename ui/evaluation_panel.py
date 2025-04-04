@@ -177,6 +177,13 @@ def render_evaluation_panel(settings: Dict) -> None:
                     try:
                         # Run evaluation
                         with st.spinner("Evaluating model..."):
+                            # Get custom pipeline if active
+                            custom_pipeline = None
+                            if st.session_state.get("use_custom_pipeline", False) and "custom_pipeline_models" in st.session_state:
+                                custom_pipeline = st.session_state.custom_pipeline_models
+                                st.info("Using custom pipeline for evaluation")
+                            
+                            # Run evaluation with or without custom pipeline
                             results_df, overall_metrics, entity_metrics, nervaluate_overall_metrics, nervaluate_entity_metrics = evaluate_model(
                                 df=validation_df,
                                 base_model=base_model,
@@ -188,26 +195,26 @@ def render_evaluation_panel(settings: Dict) -> None:
                                 overlap_tolerance=overlap_tolerance,
                                 overlap_threshold=match_threshold,
                                 progress_callback=update_progress,
+                                custom_pipeline=custom_pipeline
                             )
-
-                            if (add_to_benchmark):
-                                model_selection = settings.get("model_selection")
-                                add_to_benchmark_panel(uploaded_file,nervaluate_overall_metrics, nervaluate_entity_metrics,model_selection)
-
                             
-                            # Run threshold analysis if requested
+                            # Run threshold analysis if requested (only for non-custom pipeline)
                             threshold_results = None
-                            if run_threshold_analysis and 'thresholds' in locals():
+                            if run_threshold_analysis and 'thresholds' in locals() and not custom_pipeline:
                                 with st.spinner("Running threshold sensitivity analysis..."):
                                     threshold_results = analyze_threshold_sensitivity(
                                         df=validation_df,
                                         model_family=model_family,
                                         model_path=model_path,
                                         thresholds=thresholds,
-                                        exclude_overlaps=False,# exclude_overlaps,
+                                        exclude_overlaps=False,
                                         overlap_tolerance=overlap_tolerance,
                                         overlap_threshold=match_threshold,
                                     )
+
+                            if (add_to_benchmark):
+                                model_selection = settings.get("model_selection")
+                                add_to_benchmark_panel(uploaded_file, nervaluate_overall_metrics, nervaluate_entity_metrics, model_selection)
                         
                         # Clear progress indicators
                         progress_bar.empty()

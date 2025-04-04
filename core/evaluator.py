@@ -9,7 +9,7 @@ import pandas as pd
 import streamlit as st
 from presidio_analyzer import RecognizerResult, EntityRecognizer, AnalyzerEngine
 
-from config.config import SYSTEM_TO_VALIDATION_MAPPING, VALIDATION_TO_SYSTEM_MAPPING
+from config.config import SYSTEM_TO_VALIDATION_MAPPING, VALIDATION_TO_SYSTEM_MAPPING, MODEL_DETAILS
 from core.detector import analyze_text, filter_overlapping_entities, initialize_analyzer_engine
 from models.model_factory import get_independent_model
 from utils.metrics import (
@@ -87,21 +87,24 @@ def analyze_validation_text(
     entities: Optional[List[str]] = None,
     exclude_overlaps: bool = True,
     overlap_tolerance: int = 1,
-    ad_hoc_recognizers: List[EntityRecognizer] = None
+    ad_hoc_recognizers: List[EntityRecognizer] = None,
+    model_name: Optional[str] = None
 ) -> List[Dict[str, Any]]:
     """
     Analyze text from validation dataset.
     
     Args:
-        model_family: The model family (spacy, huggingface, gliner)
-        model_path: The specific model path or name
+        _analyzer: The analyzer engine to use
         text: The text to analyze
         threshold: Confidence threshold for detection
+        entities: List of entities to detect
         exclude_overlaps: Whether to exclude overlapping entities
         overlap_tolerance: Character tolerance for overlaps
+        ad_hoc_recognizers: List of ad-hoc recognizers
+        model_name: Optional name of the model producing these predictions
         
     Returns:
-        List of spans in the format {'start': int, 'end': int, 'label': str, 'score': float}
+        List of spans in the format {'start': int, 'end': int, 'label': str, 'score': float, 'model': str}
     """
     try:
         # Get system entities to detect (all from validation mapping)
@@ -117,32 +120,19 @@ def analyze_validation_text(
             score_threshold=threshold,
             ad_hoc_recognizers=ad_hoc_recognizers
         )
-        # Filter overlapping entities if needed
-        # if exclude_overlaps:
-        #     results = filter_overlapping_entities(
-        #         results=results,
-        #         exclude_overlaps=exclude_overlaps,
-        #         overlap_tolerance=overlap_tolerance
-        #     )
 
         # Convert to spans
         spans = []
         for res in results:
-            # Map system entity type to validation entity type
-            # mapped_label = res.entity_type
-            # for val_type, sys_type in VALIDATION_TO_SYSTEM_MAPPING.items():
-            #     if sys_type == res.entity_type:
-            #         mapped_label = val_type
-            #         break
-
-            # Create span
             spans.append({
                 "start": int(res.start),
                 "end": int(res.end),
-                "label": MODEL_ENTITIES_TO_STANDARDIZED_ENTITY_MAPPING.get(res.entity_type, 'UNKNOWN'), # mapped_label,
+                "label": MODEL_ENTITIES_TO_STANDARDIZED_ENTITY_MAPPING.get(res.entity_type, 'UNKNOWN'),
                 "original_label": res.entity_type,
-                "score": float(res.score)
+                "score": float(res.score),
+                "model": model_name or "default"
             })
+        
         # Sort by start position
         spans.sort(key=lambda x: x["start"])
         
@@ -150,6 +140,79 @@ def analyze_validation_text(
     except Exception as e:
         logger.error(f"Error analyzing validation text: {str(e)}")
         return []
+
+
+def resolve_overlapping_predictions(
+    predictions: List[Dict[str, Any]],
+    custom_pipeline: Dict[str, str],
+    overlap_tolerance: int = 1
+) -> List[Dict[str, Any]]:
+    """
+    Resolve overlapping predictions from different models based on custom pipeline configuration.
+    
+    Args:
+        predictions: List of predictions from different models
+        custom_pipeline: Dictionary mapping entity types to model names
+        overlap_tolerance: Character tolerance for overlaps
+        
+    Returns:
+        List of resolved predictions
+    """
+    if not predictions:
+        return []
+        
+    # Sort predictions by start position
+    predictions.sort(key=lambda x: x["start"])
+    
+    # Group overlapping predictions
+    groups = []
+    current_group = [predictions[0]]
+    
+    for pred in predictions[1:]:
+        # Check if current prediction overlaps with the last one in current group
+        last_pred = current_group[-1]
+        if (pred["start"] <= last_pred["end"] + overlap_tolerance and 
+            pred["end"] >= last_pred["start"] - overlap_tolerance):
+            current_group.append(pred)
+        else:
+            groups.append(current_group)
+            current_group = [pred]
+    
+    groups.append(current_group)
+    
+    # Resolve each group
+    resolved_predictions = []
+    for group in groups:
+        if len(group) == 1:
+            # No overlap, keep the prediction
+            resolved_predictions.append(group[0])
+        else:
+            # Find the best prediction for this overlap
+            best_pred = None
+            best_score = -1
+            
+            for pred in group:
+                # Check if this model is responsible for this entity type
+                is_responsible = False
+                for entity_type, model_name in custom_pipeline.items():
+                    if (pred["label"] == entity_type and 
+                        pred["model"] == model_name):
+                        is_responsible = True
+                        break
+                
+                # If this model is responsible for this entity type
+                if is_responsible:
+                    if pred["score"] > best_score:
+                        best_pred = pred
+                        best_score = pred["score"]
+            
+            # If no responsible model found, use highest score
+            if best_pred is None:
+                best_pred = max(group, key=lambda x: x["score"])
+            
+            resolved_predictions.append(best_pred)
+    
+    return resolved_predictions
 
 
 def evaluate_model(
@@ -162,7 +225,8 @@ def evaluate_model(
     exclude_overlaps: bool = True,
     overlap_tolerance: int = 1,
     overlap_threshold: float = 0.5,
-    progress_callback: Optional[Callable[[float], None]] = None
+    progress_callback: Optional[Callable[[float], None]] = None,
+    custom_pipeline: Optional[Dict[str, str]] = None
 ) -> Tuple[pd.DataFrame, Dict[str, Any], pd.DataFrame, Dict[str, Any], Dict[str, Any]]:
     """
     Evaluate model on validation dataset.
@@ -177,6 +241,7 @@ def evaluate_model(
         overlap_tolerance: Character tolerance for overlaps
         overlap_threshold: IoU threshold for entity matching
         progress_callback: Optional callback for progress updates
+        custom_pipeline: Optional dictionary mapping entity types to model names
         
     Returns:
         Tuple of (results DataFrame, overall metrics, entity-type metrics DataFrame)
@@ -188,18 +253,43 @@ def evaluate_model(
     
     total_rows = len(df)
 
-    if base_model == "presidio":
-        analyzer, ad_hoc_recognizers = initialize_analyzer_engine(
-            model_family=model_family,
-            model_path=model_path
-        )
-
+    # Initialize models based on whether custom pipeline is being used
+    if custom_pipeline:
+        # Initialize models for custom pipeline
+        models = {}
+        for entity_type, model_name in custom_pipeline.items():
+            print('DETAILS:', entity_type, model_name)
+            # Get model details from MODEL_DETAILS
+            model_info = next(
+                (info for name, info in MODEL_DETAILS.items() if name == model_name),
+                None
+            )
+            if model_info:
+                if model_info["base_model"] == "presidio":
+                    analyzer, ad_hoc_recognizers = initialize_analyzer_engine(
+                        model_family=model_info["model_family"],
+                        model_path=model_info["model_path"]
+                    )
+                    models[entity_type] = (analyzer, ad_hoc_recognizers, model_name)
+                else:
+                    model = get_independent_model(
+                        model_family=model_info["model_family"],
+                        model_path=model_info["model_path"]
+                    )
+                    models[entity_type] = (model, [], model_name)
     else:
-        analyzer = get_independent_model(
-            model_family=model_family,
-            model_path=model_path
-        )
-        ad_hoc_recognizers = []
+        # Initialize single model for regular evaluation
+        if base_model == "presidio":
+            analyzer, ad_hoc_recognizers = initialize_analyzer_engine(
+                model_family=model_family,
+                model_path=model_path
+            )
+        else:
+            analyzer = get_independent_model(
+                model_family=model_family,
+                model_path=model_path
+            )
+            ad_hoc_recognizers = []
 
     # Process each text in the dataset
     for idx, row in df.iterrows():
@@ -215,16 +305,42 @@ def evaluate_model(
         if not isinstance(text, str) or not text.strip():
             continue
 
-        # Analyze text
-        predictions = analyze_validation_text(
-            _analyzer=analyzer,
-            text=text,
-            entities=entities,
-            threshold=threshold,
-            exclude_overlaps=exclude_overlaps,
-            overlap_tolerance=overlap_tolerance,
-            ad_hoc_recognizers=ad_hoc_recognizers
-        )
+        # Analyze text using analyze_validation_text for both custom and non-custom pipeline
+        if custom_pipeline:
+            # Process with custom pipeline
+            all_predictions_from_models = []
+            for entity_type, (model, ad_hoc_recognizers, model_name) in models.items():
+                # Get predictions from each model with all entities
+                entity_predictions = analyze_validation_text(
+                    _analyzer=model,
+                    text=text,
+                    entities=list(set(VALIDATION_TO_SYSTEM_MAPPING.values())),
+                    threshold=threshold,
+                    exclude_overlaps=False,  # Don't filter overlaps yet
+                    overlap_tolerance=overlap_tolerance,
+                    ad_hoc_recognizers=ad_hoc_recognizers,
+                    model_name=model_name
+                )
+                all_predictions_from_models.extend(entity_predictions)
+
+            print(all_predictions_from_models)
+            # Resolve overlapping predictions
+            predictions = resolve_overlapping_predictions(
+                predictions=all_predictions_from_models,
+                custom_pipeline=custom_pipeline,
+                overlap_tolerance=overlap_tolerance
+            )
+        else:
+            # Use regular model analysis
+            predictions = analyze_validation_text(
+                _analyzer=analyzer,
+                text=text,
+                entities=entities,
+                threshold=threshold,
+                exclude_overlaps=exclude_overlaps,
+                overlap_tolerance=overlap_tolerance,
+                ad_hoc_recognizers=ad_hoc_recognizers
+            )
 
         # Calculate metrics for this text using the metrics utility
         metrics = calculate_overlap_match_metrics(
@@ -253,36 +369,16 @@ def evaluate_model(
         iou_threshold=overlap_threshold
     )
 
-    # Calculate entity-type metrics using the Nervaluate Library
-    nervaluate_metrics, nervaluate_metrics_by_tag, _, _ = get_nervaluate_metrics(all_ground_truth, all_predictions)
-    
-    # Calculate overall metrics by aggregating
-    overall_metrics = {
-        "precision": 0,
-        "recall": 0,
-        "f1": 0,
-        "true_positives": 0,
-        "false_positives": 0,
-        "false_negatives": 0,
-        "total_ground_truth": 0,
-        "total_predicted": 0
-    }
-    
-    if results:
-        # Sum counts
-        for key in ['true_positives', 'false_positives', 'false_negatives', 'total_ground_truth', 'total_predicted']:
-            overall_metrics[key] = sum(result[key] for result in results)
-        
-        # Calculate overall metrics
-        tp = overall_metrics['true_positives']
-        fp = overall_metrics['false_positives']
-        fn = overall_metrics['false_negatives']
-        
-        overall_metrics['precision'] = tp / (tp + fp) if (tp + fp) > 0 else 0
-        overall_metrics['recall'] = tp / (tp + fn) if (tp + fn) > 0 else 0
-        overall_metrics['f1'] = 2 * (overall_metrics['precision'] * overall_metrics['recall']) / (overall_metrics['precision'] + overall_metrics['recall']) if (overall_metrics['precision'] + overall_metrics['recall']) > 0 else 0
+    # Get nervaluate metrics
+    nervaluate_overall_metrics, nervaluate_entity_metrics, _, _ = get_nervaluate_metrics(
+        all_ground_truth,
+        all_predictions
+    )
 
-    return pd.DataFrame(results), overall_metrics, entity_metrics_df, nervaluate_metrics, nervaluate_metrics_by_tag
+    # Convert results to DataFrame
+    results_df = pd.DataFrame(results)
+
+    return results_df, metrics, entity_metrics_df, nervaluate_overall_metrics, nervaluate_entity_metrics
 
 
 def analyze_threshold_sensitivity(

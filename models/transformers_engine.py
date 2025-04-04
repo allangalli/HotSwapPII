@@ -157,8 +157,12 @@ def piiranha_pii_detection(model, tokenizer, text):
     predictions = torch.argmax(outputs.logits, dim=-1)
     confidence_scores = torch.max(probs, dim=-1).values
     
+    is_pii_started = False
+    pii_type_start = 0
+    current_pii_type = ''
+    current_confidence = 0.0  # Track confidence for current entity
+
     entities = []
-    current_entity = None
     
     # Get the length of predictions (should match offset_mapping length, minus special tokens)
     pred_length = predictions.shape[1]
@@ -167,78 +171,57 @@ def piiranha_pii_detection(model, tokenizer, text):
         if start == end:  # Special token
             continue
             
-        # Skip if index is out of bounds
+        # Skip if index is out of bounds (shouldn't happen now with aligned tokenization)
         if i >= pred_length:
             logger.warning(f"Token index {i} exceeds prediction length {pred_length}")
             break
 
         # Get prediction and confidence for this token
-        label_idx = predictions[0][i].item()
+        label = predictions[0][i].item()
         confidence = confidence_scores[0][i].item()
-        
-        if label_idx == model.config.label2id['O']:
-            # End any current entity when we hit an Outside token
-            if current_entity:
-                entities.append(current_entity)
-                current_entity = None
-            continue
-        
-        # Get the full label including prefix (B-, I-, L-, U-)
-        full_label = model.config.id2label[label_idx]
-        
-        # Extract the entity type by removing the prefix if it exists
-        if '-' in full_label:
-            prefix, entity_type = full_label.split('-', 1)
+
+        if label != model.config.label2id['O']:  # Non-O label
+            pii_type = model.config.id2label[label]
+            if not is_pii_started:
+                is_pii_started = True
+                pii_type_start = start  # Remove the +1 offset
+                current_pii_type = pii_type
+                current_confidence = confidence
+            elif pii_type != current_pii_type:
+                # End current pii type and start a new one
+                entities.append({
+                    "start": pii_type_start, 
+                    "end": start, 
+                    "label": get_standardized_pii_label(current_pii_type),
+                    "score": current_confidence
+                })
+                pii_type_start = start
+                current_pii_type = pii_type
+                current_confidence = confidence
+            else:
+                # Same entity continues, update confidence to average
+                current_confidence = (current_confidence + confidence) / 2
         else:
-            # Handle case where model doesn't use BILOU schema
-            prefix = ''
-            entity_type = full_label
-            
-        # Standardize the entity type
-        entity_type = get_standardized_pii_label(entity_type)
-        
-        # Handle token based on its prefix
-        if prefix in ['B', 'U'] or not prefix:
-            # Begin a new entity (Beginning or Unit)
-            # Close any current entity first
-            if current_entity:
-                entities.append(current_entity)
-            
-            # Start a new entity
-            current_entity = {
-                "start": start,
-                "end": end,
-                "label": entity_type,
-                "score": confidence
-            }
-        elif prefix == 'I' and current_entity and current_entity["label"] == entity_type:
-            # Inside - extend the current entity and update the score
-            current_entity["end"] = end
-            current_entity["score"] = (current_entity["score"] + confidence) / 2  
-        elif prefix == 'L' and current_entity and current_entity["label"] == entity_type:
-            # Last - finish the current entity
-            current_entity["end"] = end
-            current_entity["score"] = (current_entity["score"] + confidence) / 2
-            entities.append(current_entity)
-            current_entity = None
-        else:
-            # Unexpected transition - close any current entity and start a new one
-            if current_entity:
-                entities.append(current_entity)
-            
-            current_entity = {
-                "start": start,
-                "end": end,
-                "label": entity_type,
-                "score": confidence
-            }
-    
-    # Add the last entity if we ended while still tracking one
-    if current_entity:
-        entities.append(current_entity)
+            if is_pii_started:
+                entities.append({
+                    "start": pii_type_start, 
+                    "end": start, 
+                    "label": get_standardized_pii_label(current_pii_type),
+                    "score": current_confidence
+                })
+                is_pii_started = False
+                current_confidence = 0.0
+
+    # Handle case where PII is at the end of the text
+    if is_pii_started:
+        entities.append({
+            "start": pii_type_start, 
+            "end": len(text) if end >= len(text) else end, 
+            "label": get_standardized_pii_label(current_pii_type),
+            "score": current_confidence
+        })
     
     # Combine adjacent entities with the same label
-    # This handles cases where the model predicted separate entities that should be merged
     combined_entities = combine_adjacent_labels(entities)
     
     # Convert to AnalyzerResult objects
