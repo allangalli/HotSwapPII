@@ -11,12 +11,8 @@ enableXsrfProtection = true
 enableCORS = false
 enableWebsocketCompression = false
 
-[browser]
-gatherUsageStats = false
-
 [runner]
 fastRerenderThreshold = 1000
 
 [client]
-toolbarMode = "minimal"
 showErrorDetails = false 
