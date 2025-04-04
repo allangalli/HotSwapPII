@@ -97,3 +97,12 @@ def render_model_comparison_panel(settings: Dict) -> None:
                                 use_container_width=True,
                                 hide_index=True,
                             )
+                            
+                            # Add download button for model comparison results
+                            csv_comparison = display_df.to_csv(index=False).encode("utf-8")
+                            st.download_button(
+                                label=f"Download {evaluation_metrics[j]} Comparison ({metric_evaluation_schemas[i]}) (CSV)",
+                                data=csv_comparison,
+                                file_name=f"{dataset_selection}_{metric_evaluation_schemas_keys[i]}_{evaluation_metrics_keys[j]}_comparison.csv",
+                                mime="text/csv",
+                            )

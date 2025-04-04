@@ -232,6 +232,15 @@ def render_custom_pipeline_panel(settings: Dict) -> None:
     best_df = pd.DataFrame(best_model_data)
     st.dataframe(best_df, use_container_width=True, hide_index=True)
     
+    # Add download button for best models
+    csv_best_models = best_df.to_csv(index=False).encode("utf-8")
+    st.download_button(
+        label="Download Best Models by Entity Type (CSV)",
+        data=csv_best_models,
+        file_name="best_models_by_entity.csv",
+        mime="text/csv",
+    )
+    
     # Create custom pipeline configuration
     st.subheader("Custom Pipeline Configuration")
 
@@ -292,6 +301,15 @@ def render_custom_pipeline_panel(settings: Dict) -> None:
 
         pipeline_df = pd.DataFrame(pipeline_data)
         st.dataframe(pipeline_df, use_container_width=True, hide_index=True)
+        
+        # Add download button for custom pipeline configuration
+        csv_pipeline = pipeline_df.to_csv(index=False).encode("utf-8")
+        st.download_button(
+            label="Download Custom Pipeline Configuration (CSV)",
+            data=csv_pipeline,
+            file_name="custom_pipeline_config.csv",
+            mime="text/csv",
+        )
         
         # Add a warning if pipeline is active but configuration has changed
         if "custom_pipeline" in settings and settings["custom_pipeline"] != st.session_state.custom_pipeline_models:

@@ -111,6 +111,15 @@ def render_detection_results(
                 ),
             },
         )
+        
+        # Add download button for results
+        csv_results = df_display.to_csv(index=False).encode("utf-8")
+        st.download_button(
+            label="Download Detection Results (CSV)",
+            data=csv_results,
+            file_name="pii_detection_results.csv",
+            mime="text/csv",
+        )
     
 
     # Summary statistics

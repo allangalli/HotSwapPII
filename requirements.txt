@@ -12,3 +12,5 @@ openai
 poetry
 nervaluate
 spacy
+django
+gliner

@@ -9,6 +9,7 @@ from typing import Dict, List, Tuple
 import numpy as np
 import pandas as pd
 import streamlit as st
+import altair as alt
 
 from core.evaluator import (analyze_threshold_sensitivity, evaluate_model,
                             process_validation_data)
@@ -428,46 +429,15 @@ def render_evaluation_results(
                         use_container_width=True,
                         hide_index=True,
                     )
-
-                    # # Create visualizations
-                    # st.subheader("Entity Performance Visualizations")
-                    #
-                    # # F1 score heatmap
-                    # f1_heatmap = create_metrics_heatmap(
-                    #     entity_metrics,
-                    #     metric="f1",
-                    #     title="F1 Score by Entity Type"
-                    # )
-                    # if f1_heatmap:
-                    #     st.altair_chart(f1_heatmap, use_container_width=True)
-                    #
-                    # # Comparison chart
-                    # comparison_chart = create_f1_comparison_chart(entity_metrics)
-                    # if comparison_chart:
-                    #     st.altair_chart(comparison_chart, use_container_width=True)
-                    #
-                    # # Download buttons
-                    # st.subheader("Export Results")
-                    #
-                    # col1, col2 = st.columns(2)
-                    #
-                    # with col1:
-                    #     csv_entity = entity_metrics.to_csv(index=False).encode("utf-8")
-                    #     st.download_button(
-                    #         label="Download Entity Metrics (CSV)",
-                    #         data=csv_entity,
-                    #         file_name="entity_type_metrics.csv",
-                    #         mime="text/csv",
-                    #     )
-                    #
-                    # with col2:
-                    #     csv_results = results_df.to_csv(index=False).encode("utf-8")
-                    #     st.download_button(
-                    #         label="Download Full Results (CSV)",
-                    #         data=csv_results,
-                    #         file_name="evaluation_results.csv",
-                    #         mime="text/csv",
-                    #     )
+                    
+                    # Add download button for entity metrics
+                    csv_entity = display_df.to_csv(index=False).encode("utf-8")
+                    st.download_button(
+                        label=f"Download {metric_evaluation_schemas[i]} Entity Metrics (CSV)",
+                        data=csv_entity,
+                        file_name=f"entity_metrics_{metric_evaluation_schemas_keys[i]}.csv",
+                        mime="text/csv",
+                    )
 
         # Document Results tab
         with result_tabs[2]:
@@ -506,8 +476,26 @@ def render_evaluation_results(
                     )
 
                     st.dataframe(doc_display, use_container_width=True, hide_index=True)
+                    
+                    # Add download button for document results
+                    csv_doc_results = doc_display.to_csv(index=False).encode("utf-8")
+                    st.download_button(
+                        label="Download Document Results (CSV)",
+                        data=csv_doc_results,
+                        file_name="document_results_nervaluate.csv",
+                        mime="text/csv",
+                    )
                 else:
                     st.dataframe(results_df, use_container_width=True)
+                    
+                    # Add download button for full results
+                    csv_full_results = results_df.to_csv(index=False).encode("utf-8")
+                    st.download_button(
+                        label="Download Full Results (CSV)",
+                        data=csv_full_results,
+                        file_name="full_results_nervaluate.csv",
+                        mime="text/csv",
+                    )
             else:
                 st.info("No per-document results available.")
 
@@ -689,8 +677,26 @@ def render_evaluation_results(
                     )
 
                     st.dataframe(doc_display, use_container_width=True, hide_index=True)
+                    
+                    # Add download button for document results
+                    csv_doc_results = doc_display.to_csv(index=False).encode("utf-8")
+                    st.download_button(
+                        label="Download Document Results (CSV)",
+                        data=csv_doc_results,
+                        file_name="document_results_in_house.csv",
+                        mime="text/csv",
+                    )
                 else:
                     st.dataframe(results_df, use_container_width=True)
+                    
+                    # Add download button for full results
+                    csv_full_results = results_df.to_csv(index=False).encode("utf-8")
+                    st.download_button(
+                        label="Download Full Results (CSV)",
+                        data=csv_full_results,
+                        file_name="full_results_in_house.csv",
+                        mime="text/csv",
+                    )
             else:
                 st.info("No per-document results available.")
 
@@ -726,7 +732,16 @@ def render_evaluation_results(
 
                 # Display table
                 st.dataframe(display_df, use_container_width=True, hide_index=True)
-
+                
+                # Add download button for threshold results
+                csv_threshold_display = display_df.to_csv(index=False).encode("utf-8")
+                st.download_button(
+                    label="Download Threshold Results (CSV)",
+                    data=csv_threshold_display,
+                    file_name="threshold_analysis_results.csv",
+                    mime="text/csv",
+                )
+                
                 # Create line chart of metrics vs threshold
                 threshold_chart_data = threshold_results.melt(
                     id_vars=["threshold"],
@@ -739,8 +754,6 @@ def render_evaluation_results(
                 threshold_chart_data["Metric"] = threshold_chart_data["Metric"].str.capitalize()
 
                 # Create chart
-                import altair as alt
-
                 chart = alt.Chart(threshold_chart_data).mark_line(point=True).encode(
                     x=alt.X("threshold:Q", title="Confidence Threshold"),
                     y=alt.Y("Value:Q", title="Score", scale=alt.Scale(domain=[0, 1])),
@@ -770,12 +783,12 @@ def render_evaluation_results(
                     f"{threshold_results.loc[best_f1_idx, 'f1']:.2%}."
                 )
 
-                # Download button
-                csv_threshold = threshold_results.to_csv(index=False).encode("utf-8")
+                # Download original threshold results data
+                csv_threshold_raw = threshold_results.to_csv(index=False).encode("utf-8")
                 st.download_button(
-                    label="Download Threshold Analysis (CSV)",
-                    data=csv_threshold,
-                    file_name="threshold_analysis.csv",
+                    label="Download Raw Threshold Data (CSV)",
+                    data=csv_threshold_raw,
+                    file_name="threshold_analysis_raw.csv",
                     mime="text/csv",
                 )
             else:

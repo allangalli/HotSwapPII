@@ -119,3 +119,12 @@ def render_benchmarks_panel(settings: Dict) -> None:
                         use_container_width=True,
                         hide_index=True,
                     )
+                    
+                    # Add download button for benchmark results
+                    csv_benchmark = display_df.to_csv(index=False).encode("utf-8")
+                    st.download_button(
+                        label=f"Download {dataset_selection} {metric_evaluation_schemas[i]} Benchmark (CSV)",
+                        data=csv_benchmark,
+                        file_name=f"{dataset_selection}_{metric_evaluation_schemas_keys[i]}_benchmark.csv",
+                        mime="text/csv",
+                    )
