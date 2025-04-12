@@ -1,6 +1,6 @@
 # HotSwapPII
 
-A comprehensive system for detecting and anonymizing personally identifiable information (PII) in text documents using various NER models.
+A comprehensive platform for end-to-end evalution of PII detection and anonymizing in unstrcutured text documents using various SOTA models.
 
 Home Page             |  Results View
 :-------------------------:|:-------------------------:
