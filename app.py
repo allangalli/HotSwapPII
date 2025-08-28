@@ -213,7 +213,7 @@ def main():
         <style>
         /* Main background and container styles */
         .stApp {
-            background-color: #FFFFFF;
+            background-color: #000000;
             color: #4A4A4A;
         }
         
