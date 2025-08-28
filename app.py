@@ -213,7 +213,7 @@ def main():
         <style>
         /* Main background and container styles */
         .stApp {
-            background-color: #46536D;
+            background-color: #000000;
             color: #ffffff;
         }
         
@@ -225,7 +225,7 @@ def main():
         /* Header styling */
         .stApp header {
             background: linear-gradient(135deg, #0052CC 0%, #014da4 100%);
-            color: black;
+            color: white;
             padding: 1rem;
             border-radius: 0.5rem;
             margin-bottom: 1rem;
