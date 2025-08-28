@@ -214,7 +214,7 @@ def main():
         /* Main background and container styles */
         .stApp {
             background-color: #46536D;
-            color: #4A4A4A;
+            color: #ffffff;
         }
         
         /* Change st-c2 class background to use RBC yellow */
