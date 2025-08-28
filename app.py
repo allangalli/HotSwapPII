@@ -44,7 +44,7 @@ def main():
     # Application title
     st.title(APP_TITLE)
     st.caption(APP_DESCRIPTION)
-    
+
     # Initialize session state if needed
     if "detection_results" not in st.session_state:
         st.session_state["detection_results"] = []
@@ -54,14 +54,14 @@ def main():
         st.session_state["loading"] = False
     if "use_custom_pipeline" not in st.session_state:
         st.session_state["use_custom_pipeline"] = False
-    
+
     # Render sidebar and get settings
     settings = render_sidebar()
-    
+
     # Render tabs for main content
     tab_titles = ["PII Detection", "Model Evaluation", "Model Dataset Benchmarks", "Model Comparison", "Custom Pipeline"]
     tabs = st.tabs(tab_titles)
-    
+
     # PII Detection tab
     with tabs[0]:
         # Add custom pipeline status indicator
@@ -78,10 +78,10 @@ def main():
                     <span style="color: #4A4A4A; font-weight: 500;">Custom Pipeline Active</span>
                 </div>
             """, unsafe_allow_html=True)
-        
+
         # Render input panel
         text, input_state = render_input_panel(DEFAULT_DEMO_TEXT_PATH)
-        
+
         # Process detection if button clicked or settings changed
         if input_state.get("process_clicked", False):
             with st.spinner("Analyzing text..."):
@@ -104,10 +104,10 @@ def main():
                 # Check if custom pipeline is selected
                 if "use_custom_pipeline" in st.session_state and st.session_state["use_custom_pipeline"] and "custom_pipeline" in settings:
                     st.info("Using custom pipeline for entity detection")
-                    
+
                     # Get the custom pipeline configuration
                     custom_pipeline = settings["custom_pipeline"]
-                    
+
                     # Process text with the custom pipeline
                     results = process_with_custom_pipeline(
                         text=text,
@@ -142,7 +142,7 @@ def main():
                         model_path=model_path
                     )
                     results = model.analyze(text=text, entities=selected_entities, language='en')
-                
+
                 # Filter overlapping entities if needed
                 if exclude_overlaps:
                     results = filter_overlapping_entities(
@@ -150,15 +150,15 @@ def main():
                         exclude_overlaps=exclude_overlaps,
                         overlap_tolerance=overlap_tolerance,
                     )
-                
+
                 # Store results in session state
                 st.session_state["detection_results"] = results
                 st.session_state["show_results"] = True
                 st.session_state["loading"] = False
-                
+
                 # Log results
                 logger.info(f"Detected {len(results)} PII entities")
-        
+
         # Render results panel
         render_results_panel(
             text=text,
@@ -166,7 +166,7 @@ def main():
             settings=settings,
             show_results=st.session_state["show_results"],
         )
-    
+
     # Model Evaluation tab
     with tabs[1]:
         # Add custom pipeline status indicator
@@ -183,7 +183,7 @@ def main():
                     <span style="color: #4A4A4A; font-weight: 500;">Custom Pipeline Active - Evaluation Results May Vary</span>
                 </div>
             """, unsafe_allow_html=True)
-        
+
         render_evaluation_panel(settings)
 
     # Model Benchmarks tab
@@ -193,11 +193,11 @@ def main():
     # Model Comparison tab
     with tabs[3]:
         render_model_comparison_panel(settings)
-    
+
     # Custom Pipeline tab
     with tabs[4]:
         render_custom_pipeline_panel(settings)
-    
+
     # Footer
     st.markdown("---")
     st.caption(
@@ -213,8 +213,8 @@ def main():
         <style>
         /* Main background and container styles */
         .stApp {
-            background-color: #000000;
-            color: #ffffff;
+            background-color: #FFFFFF;
+            color: #4A4A4A;
         }
         
         /* Change st-c2 class background to use RBC yellow */
@@ -507,7 +507,7 @@ if __name__ == "__main__":
     # Create data directory if it doesn't exist
     data_dir = Path("data")
     data_dir.mkdir(exist_ok=True)
-    
+
     # Create demo text file if it doesn't exist
     demo_text_path = Path(DEFAULT_DEMO_TEXT_PATH)
     if not demo_text_path.exists():
@@ -516,10 +516,10 @@ My email is john.smith@example.com and my phone number is (555) 123-4567.
 My credit card number is 4111-1111-1111-1111 with expiration date 05/25.
 My social security number is 123-45-6789 and my passport number is X12345678.
 Please contact me at my home address: 123 Main Street, Apt 4B, New York, NY 10001."""
-        
+
         demo_text_path.parent.mkdir(exist_ok=True)
         with open(demo_text_path, "w", encoding="utf-8") as f:
             f.write(demo_text)
-    
+
     # Run the application
     main()
