@@ -4,7 +4,7 @@ backgroundColor = "#FFFFFF"  # White
 secondaryBackgroundColor = "#F8F9FA"  # Light Gray
 textColor = "#4A4A4A"  # Dark Gray
 font = "sans serif"
-base="light"
+base="dark"
 
 [server]
 enableXsrfProtection = true
