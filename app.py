@@ -225,7 +225,7 @@ def main():
         /* Header styling */
         .stApp header {
             background: linear-gradient(135deg, #0052CC 0%, #014da4 100%);
-            color: white;
+            color: black;
             padding: 1rem;
             border-radius: 0.5rem;
             margin-bottom: 1rem;
