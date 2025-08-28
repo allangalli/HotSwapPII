@@ -1,6 +1,8 @@
 [theme]
-base="dark"
-primaryColor="#0052cc"
+primaryColor = "#0052CC"  # RBC Blue
+backgroundColor = "#FFFFFF"  # White
+secondaryBackgroundColor = "#F8F9FA"  # Light Gray
+textColor = "#4A4A4A"  # Dark Gray
 font = "sans serif"
 base="dark"
 
