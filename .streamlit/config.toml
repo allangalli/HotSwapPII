@@ -1,10 +1,9 @@
 [theme]
-primaryColor = "#0052CC"  # RBC Blue
-backgroundColor = "#171723"  # Black
-secondaryBackgroundColor = "#F8F9FA"  # Light Gray
-textColor = "#ffffff"  # White
+base="dark"
+primaryColor="#0052cc"
 font = "sans serif"
 base="dark"
+
 
 [server]
 enableXsrfProtection = true
