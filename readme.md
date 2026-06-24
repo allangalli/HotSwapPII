@@ -128,5 +128,5 @@ pii-detection/
 
 ## Credits
 
-- This application uses [Microsoft Presidio](https://github.com/microsoft/presidio) for PII detection and anonymization
+- This application uses [Microsoft Presidio](https://github.com/microsoft/presidio) for PII detection and anonymization system
 - UI built with [Streamlit](https://streamlit.io/)
