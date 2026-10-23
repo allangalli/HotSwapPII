@@ -87,7 +87,7 @@ def _calculate_offsets(chunks: List[str]) -> List[int]:
     offsets = []
     for chunk in chunks:
         offsets.append(offset)
-        offset += len(chunk) + 1  # +1 for the space that was removed during split
+        offset += len(chunk)  # chunks are contiguous slices of text, nothing is removed
     return offsets
 
 def _adjust_indices(entities: List[Dict], offset: int) -> List[Dict]:
