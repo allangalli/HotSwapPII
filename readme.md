@@ -38,18 +38,6 @@ poetry install
 poetry run streamlit run app.py
 ```
 
-### Using pip
-
-1. Clone this repository
-2. Install dependencies:
-
-```bash
-pip install -r requirements.txt
-
-# Run the application
-streamlit run app.py
-```
-
 ## Usage
 
 ### PII Detection

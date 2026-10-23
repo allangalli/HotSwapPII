@@ -5,10 +5,9 @@ import logging
 from typing import Tuple
 from typing import List, Dict
 
-import torch
 from gliner import GLiNER
-from presidio_analyzer import RecognizerRegistry, RecognizerResult
-from presidio_analyzer.nlp_engine import NlpEngine, NlpEngineProvider
+from presidio_analyzer import RecognizerRegistry
+from presidio_analyzer.nlp_engine import NlpEngine, NlpEngineProvider, device_detector
 from presidio_analyzer.predefined_recognizers import GLiNERRecognizer
 
 from config.config import GLINER_ENTITY_MAPPING, GLINER_LABELS
@@ -52,40 +51,7 @@ def create_gliner_engine(model_path: str) -> Tuple[NlpEngine, RecognizerRegistry
         # map_location="cpu",
         threshold=0.5,
         # threshold=0.3,
-        map_location="cuda" if torch.cuda.is_available() else "cpu",
     )
-
-    gliner_recognizer.presidio_analyze = gliner_recognizer.analyze
-
-    def _predict_chunked_text(text: str, entities: List[str], chunk_size: int = 384) -> \
-            List[RecognizerResult]:
-
-        if chunk_size <= 0:
-            raise ValueError("chunk_size must be greater than 0")
-
-        chunks = _split_text_into_chunks(gliner_recognizer.gliner, text, chunk_size)
-        offsets = _calculate_offsets(chunks)
-
-        all_entities = []
-        chunk_entities_list = []
-        for chunk in chunks:
-            chunk_entities_list.append(gliner_recognizer.presidio_analyze(chunk, entities))
-
-        for chunk_entities, offset in zip(chunk_entities_list, offsets):
-            adjusted_entities = _adjust_indices_presidio(chunk_entities, offset)
-            all_entities.extend(adjusted_entities)
-
-        return all_entities
-
-    def _adjust_indices_presidio(entities: List[RecognizerResult], offset: int) -> List[RecognizerResult]:
-        for entity in entities:
-            entity.start += offset
-            entity.end += offset
-        return entities
-
-    gliner_recognizer.analyze = \
-        lambda text, entities, language = "en", score_threshold=None, return_decision_process=None, allow_list=None, ad_hoc_recognizers=None, nlp_artifacts = None: (
-            _predict_chunked_text(text, entities))
 
     # Add the GLiNER recognizer to the registry
     registry.add_recognizer(gliner_recognizer)
@@ -96,7 +62,7 @@ def create_gliner_engine(model_path: str) -> Tuple[NlpEngine, RecognizerRegistry
     return nlp_engine, registry
 
 def get_gliner_model(model_path: str, options: Dict[str, any] = None):
-    gliner_model = GLiNER.from_pretrained(model_path)
+    gliner_model = GLiNER.from_pretrained(model_path, map_location=device_detector.get_device())
 
     # options["labels"]
     gliner_model.analyze = lambda text, entities, language, score_threshold=None, return_decision_process=None, allow_list=None, ad_hoc_recognizers=None: gliner_pii_detection(gliner_model, text, GLINER_LABELS)
