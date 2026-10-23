@@ -5,6 +5,7 @@ import logging
 from typing import Tuple
 from typing import List, Dict
 
+import torch
 from gliner import GLiNER
 from presidio_analyzer import RecognizerRegistry, RecognizerResult
 from presidio_analyzer.nlp_engine import NlpEngine, NlpEngineProvider
@@ -51,7 +52,7 @@ def create_gliner_engine(model_path: str) -> Tuple[NlpEngine, RecognizerRegistry
         # map_location="cpu",
         threshold=0.5,
         # threshold=0.3,
-        map_location="gpu",
+        map_location="cuda" if torch.cuda.is_available() else "cpu",
     )
 
     gliner_recognizer.presidio_analyze = gliner_recognizer.analyze
