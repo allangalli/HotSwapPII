@@ -19,6 +19,8 @@ This application provides an interactive interface for detecting PII entities in
 
 ## Installation
 
+Requires Python 3.11 to 3.14.
+
 ### Using Poetry (Recommended)
 
 1. Clone this repository
@@ -34,18 +36,6 @@ poetry install
 
 # Run the application
 poetry run streamlit run app.py
-```
-
-### Using pip
-
-1. Clone this repository
-2. Install dependencies:
-
-```bash
-pip install -r requirements.txt
-
-# Run the application
-streamlit run app.py
 ```
 
 ## Usage

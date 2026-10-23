@@ -12,8 +12,5 @@ enableXsrfProtection = true
 enableCORS = false
 enableWebsocketCompression = false
 
-[runner]
-fastRerenderThreshold = 1000
-
 [client]
 showErrorDetails = false 
