@@ -9,7 +9,6 @@ import os
 from pathlib import Path
 
 import streamlit as st
-from django.templatetags.i18n import language
 
 from config.config import APP_DESCRIPTION, APP_TITLE, DEFAULT_DEMO_TEXT_PATH
 from core.detector import (analyze_text, filter_overlapping_entities, 
