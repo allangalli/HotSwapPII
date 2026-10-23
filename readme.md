@@ -19,6 +19,8 @@ This application provides an interactive interface for detecting PII entities in
 
 ## Installation
 
+Requires Python 3.11 to 3.14.
+
 ### Using Poetry (Recommended)
 
 1. Clone this repository
